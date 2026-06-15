@@ -1434,6 +1434,19 @@ function init() {
     document.body.innerHTML = '<pre style="padding:20px;color:red;background:#fff;font:14px monospace">INIT ERROR: ' + (e && e.message ? e.message : e) + '\n\n' + (e && e.stack ? e.stack : '') + '</pre>';
   }
 }
+// Expose handler functions to the global scope so inline onclick="..." handlers
+// can reach them. Required because this whole script is wrapped in a try{} block:
+// sync function declarations leak to global via legacy block-hoisting, but ASYNC
+// ones (e.g. placeCall) do NOT — which broke the call buttons. Assign explicitly.
+try {
+  Object.assign(window, {
+    DATA,  // inline onclick handlers do placeCall(DATA.find(...)) — DATA is a
+           // block-scoped const and doesn't leak to global without this.
+    placeCall, setStatus, setNotes, scheduleCallback, snoozeCallback,
+    completeCallback, cancelCallback, saveCallLog, closeCallLog, openCallLog,
+    copy, addCallback, exportProgress,
+  });
+} catch (_) { /* any name not in scope is skipped by the throw; ignore */ }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
 else init();
 } catch(e) {
